@@ -1,0 +1,15 @@
+session.filed1 = type
+1: session.filed2 = uin
+101  session3
+201: session4
+qun:941862614是uid如果是群消息的话
+
+packet:1024type
+array:数组:{
+    msgtype:0
+    text:xxx
+}
+
+msgtype:1020
+msgsessiontype = 1  表情
+普通消息 sessiontype = 101

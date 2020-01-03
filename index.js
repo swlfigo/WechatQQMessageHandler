@@ -60,30 +60,30 @@ app.post('/qqmessage',function(req,res){
   }
   console.log(finalMessage)
   let macQQServer = 'http://127.0.0.1:53777/QQ-plugin/send-message'
-  if (groupCode == '941862614' && isGroupChat && isPureTextMessage){
+  // if (groupCode == '941862614' && isGroupChat && isPureTextMessage){
 
-    let requestData = {
-      "toUserID":"941862614",
-      "groupCode":"941862614",
-      "messages":[{
-        "msg-type":"0",
-        "text":"复读机纯文字消息测试 \n" + finalMessage
-      }]
+  //   let requestData = {
+  //     "toUserID":"941862614",
+  //     "groupCode":"941862614",
+  //     "messages":[{
+  //       "msg-type":"0",
+  //       "text":"复读机纯文字消息测试 \n" + finalMessage
+  //     }]
   
-    }
-    request({
-      url: macQQServer,
-      method: "POST",
-      json: true,
-      headers: {
-          "content-type": "application/json",
-      },
-      body: requestData
-  }, function(error, response, body) {
-      if (!error && response.statusCode == 200) {
-      }
-  }); 
-  }
+  //   }
+  //   request({
+  //     url: macQQServer,
+  //     method: "POST",
+  //     json: true,
+  //     headers: {
+  //         "content-type": "application/json",
+  //     },
+  //     body: requestData
+  // }, function(error, response, body) {
+  //     if (!error && response.statusCode == 200) {
+  //     }
+  // }); 
+  // }
 
 
   

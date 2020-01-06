@@ -2,6 +2,13 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var app = express();
 var request = require('request');
+var fs = require("fs");
+var downloadImage = require('./downloadEngine')
+// 同步读取
+var data = fs.readFileSync('TemplateJSON.json');
+let templateJSONInfo = data.toJSON()
+
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 

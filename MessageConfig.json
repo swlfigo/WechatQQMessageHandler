@@ -1,0 +1,26 @@
+{
+    "941862614": {
+        "toUserID": [
+            {
+                "toUserID": "403482009",
+                "isGroup": false
+            }
+        ],
+        "keyword": [
+            "test",
+            "测试"
+        ]
+    },
+    "403482009": {
+        "toUserID": [
+            {
+                "toUserID": "403482009",
+                "isGroup": false
+            }
+        ],
+        "keyword": [
+            "test",
+            "测试"
+        ]
+    }
+}

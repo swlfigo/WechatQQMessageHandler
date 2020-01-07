@@ -1,11 +1,17 @@
-
-[
-    {
-        "fromUserID":"", 
-        "toUserID":"",
-        "isGroup":"",
-        "keyword":[
+{
+    "xxx(fromUserID)": {
+        "toUserID": [
+            {
+                "toUserID": "",
+                "isGroup": ""
+            },
+            {
+                "toUserID": "",
+                "isGroup": ""
+            }
+        ],
+        "keyword": [
             "lalala"
         ]
     }
-]
+}

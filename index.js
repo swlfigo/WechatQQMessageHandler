@@ -4,20 +4,20 @@ var app = express();
 var request = require('request');
 var fs = require("fs");
 var downloadImage = require('./downloadEngine')
-// 同步读取
-var data = fs.readFileSync('TemplateJSON.json');
+// 同步读取消息Config
+var data = fs.readFileSync('MessageConfig.json');
 let templateJSONInfo = data.toJSON()
 
 
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get('/', function (req, res) {
   res.send('Hello World!');
 });
 
 // MacQQ消息接入
-app.post('/qqmessage',function(req,res){
+app.post('/qqmessage', function (req, res) {
   // console.log(req)
   // console.log(JSON.stringify(req.body));
   let fromUserID = req.body["fromUserID"]
@@ -34,39 +34,86 @@ app.post('/qqmessage',function(req,res){
   var finalMessage = ""
   var isGroupChat = false
   var isPureTextMessage = false
-  if ( groupCode !== '') {
+  if (groupCode !== '') {
     //群消息
     UIN = groupCode
     finalMessage += '来源于群消息,群号:' + UIN + ',发消息Q号:' + fromUserID + '\n'
     isGroupChat = true
-  }else{
+  } else {
     //个人消息
     UIN = fromUserID
-    finalMessage += '来源个人消息,Q号:' + UIN +  '\n'
+    finalMessage += '来源个人消息,Q号:' + UIN + '\n'
   }
-  if (req.body['imgInfo'] ) {
+  if (req.body['imgInfo']) {
     if (message.length == 0) {
       //纯图片消息
       finalMessage += '纯图片信息,'
       imageInfo.forEach(element => {
-        finalMessage +='图片下载地址:' +  element['url'] + ','
+        finalMessage += '图片下载地址:' + element['url'] + ','
       });
-      finalMessage +=  '\n'
-    }else{
+      finalMessage += '\n'
+    } else {
       //图文混合消息
       finalMessage += '图文混合信息,消息内容:' + message + '\n'
       imageInfo.forEach(element => {
         finalMessage += '图片下载地址 : ' + element['url'] + ','
       });
-      finalMessage +=  '\n'
+      finalMessage += '\n'
     }
-  }else{
-      //无图片消息
-      finalMessage += '纯文本信息:' + message + '\n'
-      isPureTextMessage = true
+  } else {
+    //无图片消息
+    finalMessage += '纯文本信息:' + message + '\n'
+    isPureTextMessage = true
   }
   console.log(finalMessage)
   let macQQServer = 'http://127.0.0.1:53777/QQ-plugin/send-message'
+  if (templateJSONInfo.hasOwnProperty(fromUserID)) {
+    if (isPureTextMessage) {
+      //纯文本信息
+      let messageInfo = templateJSONInfo["fromUserID"]
+      let toUserInfo = messageInfo["toUserID"]
+      if (!toUserInfo) {
+        res.sendStatus(200)
+        return
+      }
+      var isContainWord = false
+      for (let index = 0; index < toUserInfo.length; index++) {
+        if (isContainWord) break;
+        const toUser = toUserInfo[index];
+        let messageToUserID = toUser["toUserID"]
+        if (!messageToUserID) continue
+        let isGroup = toUser["isGroup"]
+        if (!isGroup) continue
+        let keyWordsArray = messageInfo["keyword"]
+        if (!keyWordsArray) continue
+        //构造QQ消息
+        
+        for (const keyword in keyWordsArray) {
+          if (message.indexOf(keyword) > 0) {
+            //包含关键词
+            isContainWord = true
+            
+
+            break;
+          }
+        }
+      }
+
+      let requestData = {
+        "toUserID": "941862614",
+        "groupCode": "941862614",
+        "messages": [{
+          "msg-type": "0",
+          "text": "复读机纯文字消息测试 \n" + finalMessage
+        }]
+      }
+    } else {
+      //需要下载图片
+    }
+  }
+
+
+
   // if (groupCode == '941862614' && isGroupChat && isPureTextMessage){
 
   //   let requestData = {
@@ -76,7 +123,7 @@ app.post('/qqmessage',function(req,res){
   //       "msg-type":"0",
   //       "text":"复读机纯文字消息测试 \n" + finalMessage
   //     }]
-  
+
   //   }
   //   request({
   //     url: macQQServer,
@@ -93,7 +140,7 @@ app.post('/qqmessage',function(req,res){
   // }
 
 
-  
+
 
   res.sendStatus(200)
 })

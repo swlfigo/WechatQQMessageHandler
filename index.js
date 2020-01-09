@@ -46,7 +46,7 @@ app.post('/qqmessage', function (req, res) {
   if (templateJSONInfo.hasOwnProperty(UIN)) {
     let messageInfo = templateJSONInfo[UIN]
     let toUserInfo = messageInfo["toUserID"]
-  if (!toUserInfo) {
+    if (!toUserInfo) {
       res.sendStatus(200)
       return
     }
@@ -65,7 +65,7 @@ app.post('/qqmessage', function (req, res) {
         //文字消息
         keyWordsArray.forEach(keyword => {
           let messageText = message['text']
-          if (messageText.indexOf(keyword)  != -1) {
+          if (messageText.indexOf(keyword) != -1) {
             //存在关键词匹配
             isFindedKeyword = true
           }
@@ -79,19 +79,45 @@ app.post('/qqmessage', function (req, res) {
     }
     //有匹配关键字
     let messageArray = []
+    var promiseArray = []
     for (let index = 0; index < messages.length; index++) {
       //首先提取所有图片url数组 与 文字信息数组
       let msgType = messages[index]["msg-type"]
       if (msgType == 1) {
-        downloadImage.downloadImage('http://c2cpicdw.qpic.cn' + messages[index]["url"], './z.jpg')
-        let info = { 'msg-type': "1", "file-path": '/Users/sylar/Desktop/MessageHandler/z.jpg', "burn": false }
-        messageArray.push(info)
-      } else if (msgType == 0) {
-        let info = { 'msg-type': "0", "text": messages[index]["text"] }
-        messageArray.push(info)
+        if (messages[index]["url"]) {
+          var picMessagePromise = new Promise(function (resolve, reject) {
+            var fileName = messages[index]["md5"]
+            downloadImage.downloadImage('http://c2cpicdw.qpic.cn' + messages[index]["url"], `/Users/sylar/Documents/Cache/${fileName}.jpg`, function (res, filePath) {
+              resolve({ 'msg-type': "1", "file-path": filePath, "burn": false })
+            })
+
+          })
+          promiseArray.push(picMessagePromise)
+        } else if (messages[index]["localPath"]) {
+          var picMessagePromise = new Promise(function (resolve, reject) {
+            resolve({ 'msg-type': "1", "file-path": messages[index]["localPath"], "burn": false })
+          })
+          promiseArray.push(picMessagePromise)
+        } else {
+          //如果本地没有图片或者网上图片过期，丢弃图片消息
+        }
+      }else{
+        //其他消息直接转发
+        var otherTextMessagePromise = new Promise(function (resolve, reject) {
+          resolve(messages[index])
+        })
+        promiseArray.push(otherTextMessagePromise)
       }
+      // } else if (msgType == 0) {
+      //   var pureTextMessagePromise = new Promise(function (resolve, reject) {
+      //     resolve({ 'msg-type': "0", "text": messages[index]["text"] })
+      //   })
+      //   promiseArray.push(pureTextMessagePromise)
+      // }
+
     }
-    if (messageArray.length > 0) {
+    Promise.all(promiseArray).then(function (results) {
+      //返回的事消息字典数组
       let macQQServer = 'http://127.0.0.1:53777/QQ-plugin/send-message'
       for (let index = 0; index < toUserInfo.length; index++) {
         let messageToUserID = toUserInfo[index]["toUserID"]
@@ -105,7 +131,7 @@ app.post('/qqmessage', function (req, res) {
         } else {
           sendMessageData["toUserID"] = messageToUserID
         }
-        sendMessageData["messages"] = messageArray
+        sendMessageData["messages"] = results
         request({
           url: macQQServer,
           method: "POST",
@@ -119,113 +145,8 @@ app.post('/qqmessage', function (req, res) {
           }
         });
       }
-
-
-
-
-    }
+    })
   }
-
-
-
-  // if (req.body['imgInfo']) {
-  //   if (message.length == 0) {
-  //     //纯图片消息
-  //     finalMessage += '纯图片信息,'
-  //     imageInfo.forEach(element => {
-  //       finalMessage += '图片下载地址:' + element['url'] + ','
-  //     });
-  //     finalMessage += '\n'
-  //   } else {
-  //     //图文混合消息
-  //     finalMessage += '图文混合信息,消息内容:' + message + '\n'
-  //     imageInfo.forEach(element => {
-  //       finalMessage += '图片下载地址 : ' + element['url'] + ','
-  //     });
-  //     finalMessage += '\n'
-  //   }
-  // } else {
-  //   //无图片消息
-  //   finalMessage += '纯文本信息:' + message + '\n'
-  //   isPureTextMessage = true
-  // }
-  // console.log(finalMessage)
-
-  // if (templateJSONInfo.hasOwnProperty(fromUserID)) {
-  //   if (isPureTextMessage) {
-  //     //纯文本信息
-  //     let messageInfo = templateJSONInfo["fromUserID"]
-  //     let toUserInfo = messageInfo["toUserID"]
-  //     if (!toUserInfo) {
-  //       res.sendStatus(200)
-  //       return
-  //     }
-  //     var isContainWord = false
-  //     for (let index = 0; index < toUserInfo.length; index++) {
-  //       if (isContainWord) break;
-  //       const toUser = toUserInfo[index];
-  //       let messageToUserID = toUser["toUserID"]
-  //       if (!messageToUserID) continue
-  //       let isGroup = toUser["isGroup"]
-  //       if (!isGroup) continue
-  //       let keyWordsArray = messageInfo["keyword"]
-  //       if (!keyWordsArray) continue
-  //       //构造QQ消息
-
-  //       for (const keyword in keyWordsArray) {
-  //         if (message.indexOf(keyword) > 0) {
-  //           //包含关键词
-  //           isContainWord = true
-
-
-  //           break;
-  //         }
-  //       }
-  //     }
-
-  //     let requestData = {
-  //       "toUserID": "941862614",
-  //       "groupCode": "941862614",
-  //       "messages": [{
-  //         "msg-type": "0",
-  //         "text": "复读机纯文字消息测试 \n" + finalMessage
-  //       }]
-  //     }
-  //   } else {
-  //     //需要下载图片
-  //   }
-  // }
-
-
-
-  // if (groupCode == '941862614' && isGroupChat && isPureTextMessage){
-
-  //   let requestData = {
-  //     "toUserID":"941862614",
-  //     "groupCode":"941862614",
-  //     "messages":[{
-  //       "msg-type":"0",
-  //       "text":"复读机纯文字消息测试 \n" + finalMessage
-  //     }]
-
-  //   }
-  //   request({
-  //     url: macQQServer,
-  //     method: "POST",
-  //     json: true,
-  //     headers: {
-  //         "content-type": "application/json",
-  //     },
-  //     body: requestData
-  // }, function(error, response, body) {
-  //     if (!error && response.statusCode == 200) {
-  //     }
-  // }); 
-  // }
-
-
-
-
   res.sendStatus(200)
 })
 

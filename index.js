@@ -84,24 +84,37 @@ app.post('/qqmessage', function (req, res) {
       //首先提取所有图片url数组 与 文字信息数组
       let msgType = messages[index]["msg-type"]
       if (msgType == 1) {
-        if (messages[index]["url"]) {
+        if (messages[index]["localPath"]) {
+          var picMessagePromise = new Promise(function (resolve, reject) {
+            resolve({ 'msg-type': "1", "file-path": messages[index]["localPath"], "burn": false })
+          })
+          promiseArray.push(picMessagePromise)
+        } else if (messages[index]["url"]) {
+
+
+
           var picMessagePromise = new Promise(function (resolve, reject) {
             var fileName = messages[index]["md5"]
             downloadImage.downloadImage('http://c2cpicdw.qpic.cn' + messages[index]["url"], `/Users/sylar/Documents/Cache/${fileName}.jpg`, function (res, filePath) {
               resolve({ 'msg-type': "1", "file-path": filePath, "burn": false })
+              setTimeout(() => {
+                fs.exists(filePath, function (exists) {
+                  if (exists) {
+                    fs.unlinkSync(filePath)
+                    console.log('已删除文件')
+                  } else {
+                    console.log('不存在文件')
+                  }
+                })
+              }, 10000);
             })
 
-          })
-          promiseArray.push(picMessagePromise)
-        } else if (messages[index]["localPath"]) {
-          var picMessagePromise = new Promise(function (resolve, reject) {
-            resolve({ 'msg-type': "1", "file-path": messages[index]["localPath"], "burn": false })
           })
           promiseArray.push(picMessagePromise)
         } else {
           //如果本地没有图片或者网上图片过期，丢弃图片消息
         }
-      }else{
+      } else {
         //其他消息直接转发
         var otherTextMessagePromise = new Promise(function (resolve, reject) {
           resolve(messages[index])
@@ -133,7 +146,7 @@ app.post('/qqmessage', function (req, res) {
         }
         sendMessageData["messages"] = results
         request({
-          url: macQQServer,
+          url: "http://localhost:5400/sendqqmessage",
           method: "POST",
           json: true,
           headers: {
@@ -148,6 +161,37 @@ app.post('/qqmessage', function (req, res) {
     })
   }
   res.sendStatus(200)
+})
+
+//MacQQ消息发送
+app.post('/sendqqmessage', function (req, res) {
+  let macQQServer = 'http://127.0.0.1:53777/QQ-plugin/send-message'
+  let toUserID = req.body["toUserID"]
+  let groupCode = req.body["groupCode"]
+  let messages = req.body["messages"]
+  if ((toUserID != undefined || groupCode != undefined) && messages) {
+    var sendMessageData = {}
+    if (groupCode) {
+      sendMessageData["groupCode"] = toUserID
+    } else {
+      sendMessageData["toUserID"] = toUserID
+    }
+    sendMessageData["messages"] = messages
+    request({
+      url: macQQServer,
+      method: "POST",
+      json: true,
+      headers: {
+        "content-type": "application/json",
+      },
+      body: sendMessageData
+    }, function (error, response, body) {
+      if (!error && response.statusCode == 200) {
+      }
+    });
+  }
+  res.sendStatus(200)
+
 })
 
 app.listen(5400, function () {

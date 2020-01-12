@@ -90,9 +90,6 @@ app.post('/qqmessage', function (req, res) {
           })
           promiseArray.push(picMessagePromise)
         } else if (messages[index]["url"]) {
-
-
-
           var picMessagePromise = new Promise(function (resolve, reject) {
             var fileName = messages[index]["md5"]
             downloadImage.downloadImage('http://c2cpicdw.qpic.cn' + messages[index]["url"], `/Users/sylar/Documents/Cache/${fileName}.jpg`, function (res, filePath) {
@@ -192,6 +189,13 @@ app.post('/sendqqmessage', function (req, res) {
   }
   res.sendStatus(200)
 
+})
+
+
+//微信消息接入
+app.post('/wechatmessage',function(req,res){
+  
+  res.sendStatus(200)
 })
 
 app.listen(5400, function () {
